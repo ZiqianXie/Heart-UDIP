@@ -11,6 +11,6 @@ Main structure of this repo
 
 4.the interpretabilty codes like our Perturbation-based image reconstruction.
 
-5.GWAS and PostGWAS code.
+5.GWAS and PostGWAS code.The complete GWAS summary statistics have been deposited in the GWAS Catalog (accession GCP001376).
 
 Citations: Pending
