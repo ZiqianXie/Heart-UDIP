@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# Environments
+.venv/
+venv/
+env/
+
+# Data and outputs
+data/raw/**
+!data/raw/.gitkeep
+data/processed/**
+!data/processed/.gitkeep
+results/**
+!results/.gitkeep
+
+# Logs and checkpoints
+*.log
+*.pth
+*.pt
+*.ckpt

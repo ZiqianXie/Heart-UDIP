@@ -21,12 +21,17 @@ iopath==0.1.10
 jsonpointer==2.1
 lightning-utilities==0.12.0
 linecache2==1.0.0
+matplotlib==3.9.2
 mkl-service==2.4.0
 mplcursors==0.6
+nibabel==5.3.2
 ndindex==1.9.2
 nnunetv2==2.5.2
+numpy==1.26.4
 omegaconf==2.3.0
 opencv-contrib-python==4.10.0.84
+pandas==2.2.3
+pydicom==3.0.1
 portalocker==2.10.1
 protobuf==3.20.3
 pyasn1-modules==0.2.8
@@ -34,7 +39,11 @@ pyls-spyder==0.4.0
 pynndescent==0.5.13
 PyQt5==5.15.10
 python-gdcm==3.0.24.1
+scikit-image==0.24.0
+scikit-learn==1.5.2
+scipy==1.14.1
 selectivesearch==0.4
+seaborn==0.13.2
 setuptools==69.5.1
 SimpleITK==2.4.0
 torch==2.3.1
@@ -42,6 +51,7 @@ torchaudio==2.3.1
 torchmetrics==1.6.1
 torchvision==0.18.1
 traceback2==1.4.0
+tqdm==4.66.5
 umap-learn==0.5.7
 webcolors==24.8.0
 wheel==0.43.0

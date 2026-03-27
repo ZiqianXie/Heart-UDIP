@@ -1,0 +1,8 @@
+# Example YAML config for scripts/post_gwas_analysis.R
+task: heart-manhattan
+gwas-file: results/gwas/4ch_minp.tsv
+annotation-dir: results/fuma/4ch
+output-prefix: results/post_gwas/4ch
+previous-heart: results/reference/heart_previous.csv
+previous-ecg: results/reference/ecg_previous.csv
+top-leads: 30

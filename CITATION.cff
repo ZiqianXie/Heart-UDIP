@@ -1,0 +1,62 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the associated preprint."
+title: "Heart-UDIP"
+type: software
+license: MIT
+authors:
+  - family-names: You
+    given-names: Lei
+  - family-names: Zhao
+    given-names: Xingzhong
+  - family-names: Xie
+    given-names: Ziqian
+  - family-names: Patel
+    given-names: Khush A
+  - family-names: Chen
+    given-names: Cheng
+  - family-names: Kitkungvan
+    given-names: Danai
+  - family-names: Mohammed
+    given-names: Kamil Khan
+  - family-names: Narula
+    given-names: Navneet
+  - family-names: Arbustini
+    given-names: Eloisa
+  - family-names: Cassidy
+    given-names: Craig K
+  - family-names: Narula
+    given-names: Jagat
+  - family-names: Zhi
+    given-names: Degui
+preferred-citation:
+  type: article
+  title: "Uncovering genetic architecture of the heart via genetic association studies of unsupervised deep learning derived endophenotypes"
+  authors:
+    - family-names: You
+      given-names: Lei
+    - family-names: Zhao
+      given-names: Xingzhong
+    - family-names: Xie
+      given-names: Ziqian
+    - family-names: Patel
+      given-names: Khush A
+    - family-names: Chen
+      given-names: Cheng
+    - family-names: Kitkungvan
+      given-names: Danai
+    - family-names: Mohammed
+      given-names: Kamil Khan
+    - family-names: Narula
+      given-names: Navneet
+    - family-names: Arbustini
+      given-names: Eloisa
+    - family-names: Cassidy
+      given-names: Craig K
+    - family-names: Narula
+      given-names: Jagat
+    - family-names: Zhi
+      given-names: Degui
+  journal: "bioRxiv"
+  doi: "10.1101/2025.09.17.676827"
+  year: 2025
+  month: 9

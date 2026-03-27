@@ -1,0 +1,7 @@
+key,value
+task,overlap-summary
+lead-file-a,results/fuma/4ch/leadSNPs.txt
+lead-file-b,results/fuma/2ch/leadSNPs.txt
+output-prefix,results/post_gwas/4ch_vs_2ch
+label-a,4Ch
+label-b,2Ch
