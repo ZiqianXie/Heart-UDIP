@@ -6,6 +6,10 @@ Code accompanying the study:
 
 This repository contains the imaging preprocessing, self-supervised representation learning, latent phenotype extraction, evaluation, interpretability, and GWAS preparation workflows used in the Heart-UDIP project.
 
+## Workflow overview
+
+<img width="1125" height="633" alt="Heart-UDIP workflow overview" src="https://github.com/user-attachments/assets/26fa0d37-f63f-45e5-9f40-20bbdef01f37" />
+
 ## Why this repository was reorganized
 
 The original codebase was a collection of research scripts with hard-coded paths and inconsistent directory names. It has been refactored into a clearer project structure with:
@@ -250,38 +254,6 @@ Rscript scripts/post_gwas_analysis.R \
 - Participant-level latent phenotype tables
 - Reconstruction metrics and perturbation maps
 - GWAS phenotype files and min-P summary tables
-
-## Recommended documentation for each new result set
-
-When generating a new dataset or figure, record:
-
-- cohort definition and exclusions
-- input path or accession identifier
-- command used
-- software versions
-- random seed
-- hardware used for training or inference
-- QC failures and the rules used to exclude them
-
-## Reproducibility notes
-
-See [docs/reproducibility.md](/Users/xzhao14/Documents/heart/Heart-UDIP/docs/reproducibility.md).
-
-## Code availability
-
-Suggested manuscript text:
-
-> Code used for imaging preprocessing, representation learning, latent phenotype extraction, and GWAS preparation is available from the Heart-UDIP repository at the time of publication. The repository includes versioned source code, example command-line workflows, and documentation sufficient to reproduce the computational analyses on authorized datasets.
-
-Before submission, replace the repository placeholder with the permanent public archive or DOI if one is created.
-
-## Data availability
-
-Suggested manuscript text:
-
-> The imaging and genotype data used in this study are subject to controlled-access governance and therefore cannot be redistributed directly through this repository. Derived summary statistics and non-identifiable aggregate outputs should be deposited in an appropriate public repository where permitted by the relevant data-use agreements.
-
-Edit this section to match the actual dataset governance, accession numbers, and repository deposits.
 
 ## Limitations
 
