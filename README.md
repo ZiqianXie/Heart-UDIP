@@ -264,6 +264,9 @@ Rscript scripts/post_gwas_analysis.R \
 - Some downstream GWAS commands require local institutional infrastructure and controlled-access genotype resources.
 - The R workflow under `scripts/` has been standardized into task-based command-line analyses, but each task still expects project-specific file schemas such as FUMA or MAGMA outputs.
 
+## Pipeline test script
+- the script can be found at /scripts/pipeline_test_with_other_data.py
+- 
 ## Citation
 
 If you use this code, please cite the associated preprint:
