@@ -30,9 +30,12 @@ Heart-UDIP/
 │   └── processed/               # Derived data placeholder only; not tracked
 ├── docs/
 │   └── reproducibility.md       # Notes for manuscript-ready reporting
+├── model_weights/
+│   └── readme                   # The links for the pretrained weights of our CineMAE
 ├── results/                     # Output placeholder only; not tracked
 ├── scripts/
 │   └── post_gwas_analysis.R     # Downstream exploratory R analysis
+│   └── pipeline_test_with_other_data.py     # the pipeline test script for our models.
 ├── src/
 │   └── heart_udip/
 │       ├── preprocessing/       # DICOM conversion, cropping, template building, registration
