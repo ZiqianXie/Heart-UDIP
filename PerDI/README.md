@@ -42,11 +42,24 @@ to encode.
 
 #### Step 1 — Phenotypic correlation matrix R
 
-Given residualised latent representations {latent_i} ∈ ℝ^(N×D) (after
-regressing out covariates), the phenotypic correlation matrix is:
+R is the **Pearson correlation of GCTA fastGWA-mlm LMM residuals**.
+For each latent dimension k, GCTA fits a linear mixed model that accounts for
+the genetic random effect (population structure, cryptic relatedness):
 
 ```
-R  =  Corr(latent)   ∈ ℝ^(D×D)
+phenotype_k  =  X β  +  g  +  ε       (g ~ N(0, σ²_g · GRM),  ε ~ N(0, σ²_e · I))
+```
+
+where X contains covariates (age, sex, PCs, assessment centre, …) and GRM is
+the genetic relationship matrix.  The LMM residual (ε̂) is used for dimension k
+**when GCTA's variance component estimation converges** (`.fastGWA.residual`
+file is produced).  For dimensions where GCTA does not converge or Vg is not
+significant, plain **OLS residuals** (projecting out X only) are used as a
+fallback.  This hybrid strategy is implemented in
+`load_gcta_residuals_hybrid()` in `core.py`.
+
+```
+R  =  Corr( hybrid_residuals )   ∈ ℝ^(D×D)
 ```
 
 #### Step 2 — Variant weights w

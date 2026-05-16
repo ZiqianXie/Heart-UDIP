@@ -1,10 +1,12 @@
 """
-PerDI — Perturbation-based Decoder Interpretation for cardiac MRI autoencoders.
+PerDI — Perturbation-based Decoder Interpretation for autoencoders.
 
 Public API
 ----------
 from PerDI.model     import CNN3D, load_model, select_gpu
 from PerDI.core      import (
+    # residuals (requires GCTA output)
+    load_gcta_residuals_hybrid,
     # regular PerDI (per-dimension, no GWAS needed)
     estimate_latent_sigmas,
     compute_dimension_perdi_map,
@@ -23,6 +25,7 @@ from PerDI.stability import run_stability, save_stability_results
 
 from .model import CNN3D, load_model, select_gpu
 from .core import (
+    load_gcta_residuals_hybrid,
     estimate_latent_sigmas,
     compute_dimension_perdi_map,
     compute_all_dimension_perdi_maps,
@@ -39,6 +42,7 @@ __all__ = [
     "CNN3D",
     "load_model",
     "select_gpu",
+    "load_gcta_residuals_hybrid",
     "estimate_latent_sigmas",
     "compute_dimension_perdi_map",
     "compute_all_dimension_perdi_maps",

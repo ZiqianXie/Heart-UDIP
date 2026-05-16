@@ -5,7 +5,9 @@ example_compute_weights.py
 Demonstrates how to compute variant-specific PerDI weights w = R⁻¹z.
 
 Steps covered
-  1. Load covariate-residualised latent features (N × 256 array).
+  1. Load the hybrid GCTA/OLS residual matrix (LMM residuals where Vg
+     converges; OLS fallback for dims where GCTA did not produce a
+     .fastGWA.residual file).
   2. Compute the phenotypic correlation matrix R.
   3. For each variant of interest, extract GWAS z-scores from summary-statistic
      files and solve  w = (R + λI)⁻¹ z.
@@ -31,12 +33,19 @@ from tqdm import tqdm
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from PerDI.core import compute_phenotypic_correlation_matrix, compute_variant_weights
+from PerDI.core import (
+    load_gcta_residuals_hybrid,
+    compute_phenotypic_correlation_matrix,
+    compute_variant_weights,
+)
 
 # ================================================================
 # CONFIGURATION — replace all placeholder paths before running
 # ================================================================
-RESIDUALS_NPY   = Path("/path/to/output/residuals.npy")        # (N, 256) float32
+GCTA_OUT_DIR    = Path("/path/to/gcta_nullmodels/")            # dir with *.fastGWA.residual files
+PHENO_DIR       = Path("/path/to/phenotypes/")                 # dir with Feature_0 … Feature_255
+QCOVAR_FILE     = Path("/path/to/covariates.qcovar")           # quantitative covariates
+CCOVAR_FILE     = Path("/path/to/covariates.ccovar")           # categorical covariates
 NOVEL_SNPS_TXT  = Path("/path/to/novel_snps.txt")              # rsid per line (or space-sep)
 SUMSTAT_DIR     = Path("/path/to/gwas/duin_sumstats/")         # Feature_*.fastGWA files
 OUTPUT_DIR      = Path("/path/to/output")
@@ -138,10 +147,30 @@ def grep_sumstats(
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ---- 1. Load residuals and compute R ----
-    print(f"Loading residuals from {RESIDUALS_NPY} …")
-    residuals = np.load(str(RESIDUALS_NPY))           # (N, 256)
-    print(f"  shape: {residuals.shape}")
+    # ---- 1. Load hybrid GCTA/OLS residuals and compute R ----
+    print("Loading covariates …")
+    import pandas as pd
+    qcov = pd.read_csv(str(QCOVAR_FILE), sep=r"\s+")
+    ccov = pd.read_csv(str(CCOVAR_FILE), sep=r"\s+")
+    cat_cols = [c for c in ccov.columns if c not in ("FID", "IID")]
+    ccov = pd.get_dummies(ccov, columns=cat_cols, drop_first=True)
+    feat_cols = [c for c in ccov.columns if c not in ("FID", "IID")]
+    ccov[feat_cols] = ccov[feat_cols].astype(float)
+    covar_df = pd.merge(
+        qcov.astype({"FID": str, "IID": str}),
+        ccov.astype({"FID": str, "IID": str}),
+        on=["FID", "IID"],
+    ).dropna()
+
+    print(f"Assembling hybrid GCTA/OLS residuals from {GCTA_OUT_DIR} …")
+    residuals, iids = load_gcta_residuals_hybrid(
+        gcta_out_dir=GCTA_OUT_DIR,
+        pheno_dir=PHENO_DIR,
+        covar_df=covar_df,
+        n_features=N_FEATURES,
+        tag=TAG,
+    )
+    print(f"  residuals shape: {residuals.shape}")
 
     print("Computing phenotypic correlation matrix R …")
     R = compute_phenotypic_correlation_matrix(residuals, ridge=RIDGE)

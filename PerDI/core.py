@@ -21,6 +21,15 @@ Variant-specific PerDI
         diff_i = Decoder(enc2_i, latent_i + α · ŵ) − Decoder(enc2_i, latent_i)
         PerDI  = (1/N) Σ_i  weight_i · diff_i    (weight_i = dosage_i − mean dosage)
 
+Residuals for R
+    R is the Pearson correlation matrix of **GCTA fastGWA-mlm LMM residuals**.
+    For latent dimensions where GCTA's variance component (Vg) estimation
+    converges, the LMM residuals (which account for the genetic random effect)
+    are used directly.  For dimensions where GCTA falls back to linear
+    regression (no .fastGWA.residual file produced), plain OLS residuals
+    from covariate projection are used instead.  Use
+    ``load_gcta_residuals_hybrid()`` to assemble the hybrid residual matrix.
+
 See README.md for detailed mathematical formulation.
 """
 
@@ -31,10 +40,129 @@ from typing import Sequence
 
 import numpy as np
 import nibabel as nib
+import pandas as pd
 import torch
-from scipy.linalg import solve
+from scipy.linalg import solve, lstsq
 
 from .model import CNN3D
+
+# ------------------------------------------------------------------ #
+#  Step 0 — Load GCTA hybrid residuals                                 #
+# ------------------------------------------------------------------ #
+
+
+def load_gcta_residuals_hybrid(
+    gcta_out_dir: str | Path,
+    pheno_dir: str | Path,
+    covar_df: pd.DataFrame,
+    n_features: int = 256,
+    tag: str = "",
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Assemble the (N × D) hybrid residual matrix used to compute R.
+
+    Strategy
+    --------
+    For each latent dimension k (Feature_0 … Feature_{D-1}):
+
+    * If ``<gcta_out_dir>/<tag>_Feature_k.fastGWA.fastGWA.residual`` exists
+      → use the **LMM residuals** from GCTA fastGWA-mlm (accounts for the
+        genetic random effect / population structure).
+    * Otherwise → fall back to **OLS residuals** (project out covariates
+        only).  This happens for dimensions where GCTA's variance component
+        estimation (Vg) does not converge or is not significant.
+
+    Parameters
+    ----------
+    gcta_out_dir : path
+        Directory containing GCTA null-model output files.
+        Expected filename pattern: ``<tag>_Feature_<k>.fastGWA.fastGWA.residual``
+        Each file has three whitespace-separated columns: FID  IID  residual
+        (no header).
+    pheno_dir : path
+        Directory containing phenotype files named ``Feature_0``, ``Feature_1``, …
+        Each file has three whitespace-separated columns: FID  IID  value
+        (no header).  Used for OLS fallback dimensions only.
+    covar_df : pd.DataFrame
+        Covariate design matrix with columns ``FID``, ``IID``, and one or more
+        covariate columns (already merged qcovar + one-hot-encoded ccovar).
+        Subjects not in ``covar_df`` are excluded.
+    n_features : int
+        Number of latent dimensions.  Default: 256.
+    tag : str
+        Prefix used in GCTA output filenames (e.g. ``"2ch"`` or ``"4ch"``).
+
+    Returns
+    -------
+    residuals : np.ndarray  (N, D)  float32
+        Hybrid residual matrix (LMM where available, OLS otherwise).
+    iids : np.ndarray  (N,)  str
+        Subject IIDs corresponding to rows of ``residuals``.
+    """
+    gcta_out_dir = Path(gcta_out_dir)
+    pheno_dir    = Path(pheno_dir)
+
+    pheno_files = sorted(
+        pheno_dir.glob("Feature_*"),
+        key=lambda p: int(p.name.split("_")[1]),
+    )
+    if len(pheno_files) != n_features:
+        print(
+            f"[{tag}] WARNING: found {len(pheno_files)} pheno files, "
+            f"expected {n_features}."
+        )
+
+    # ---- build common subject set (intersection of first pheno + covariates) ----
+    first_pheno = pd.read_csv(str(pheno_files[0]), sep=r"\s+", header=None,
+                              names=["FID", "IID", "y"])
+    first_pheno["IID"] = first_pheno["IID"].astype(str)
+    first_pheno["FID"] = first_pheno["FID"].astype(str)
+    covar_df = covar_df.copy()
+    covar_df["IID"] = covar_df["IID"].astype(str)
+    covar_df["FID"] = covar_df["FID"].astype(str)
+    common = pd.merge(first_pheno[["FID", "IID"]], covar_df, on=["FID", "IID"])
+    iids = common["IID"].values.astype(str)
+
+    # ---- OLS design matrix (used for fallback dimensions) ----
+    covar_cols = [c for c in covar_df.columns if c not in ("FID", "IID")]
+    X = common[covar_cols].values.astype(np.float64)
+    X = np.hstack([np.ones((len(X), 1)), X])  # add intercept
+
+    n_lmm, n_ols = 0, 0
+    residuals = np.zeros((len(iids), n_features), dtype=np.float32)
+
+    for fi, pf in enumerate(pheno_files):
+        feat_name = pf.name  # e.g. Feature_0
+        res_file  = gcta_out_dir / f"{tag}_{feat_name}.fastGWA.fastGWA.residual"
+
+        if res_file.exists():
+            # ---- LMM residuals ----
+            df = pd.read_csv(str(res_file), sep=r"\s+", header=None,
+                             names=["FID", "IID", "resid"])
+            df["IID"] = df["IID"].astype(str)
+            series = df.set_index("IID")["resid"]
+            residuals[:, fi] = series.reindex(iids).values.astype(np.float32)
+            n_lmm += 1
+        else:
+            # ---- OLS fallback ----
+            pheno = pd.read_csv(str(pf), sep=r"\s+", header=None,
+                                names=["FID", "IID", "y"])
+            pheno["IID"] = pheno["IID"].astype(str)
+            merged_y = pd.merge(
+                common[["FID", "IID"]], pheno[["IID", "y"]], on="IID"
+            )
+            y = merged_y["y"].values.astype(np.float64)
+            valid = ~np.isnan(y)
+            if valid.sum() >= 100:
+                beta, *_ = lstsq(X[valid], y[valid])
+                resid = np.full(len(y), np.nan, dtype=np.float64)
+                resid[valid] = y[valid] - X[valid] @ beta
+                residuals[:, fi] = resid.astype(np.float32)
+            n_ols += 1
+
+    print(f"[{tag}] Residuals assembled — LMM: {n_lmm}, OLS fallback: {n_ols}")
+    return residuals, iids
+
 
 # ------------------------------------------------------------------ #
 #  Step 1 — Phenotypic correlation matrix                              #
@@ -48,10 +176,16 @@ def compute_phenotypic_correlation_matrix(
     """
     Compute the (D × D) Pearson correlation matrix from an (N × D) residual matrix.
 
+    ``residuals`` should be the **hybrid GCTA/OLS residual matrix** produced by
+    :func:`load_gcta_residuals_hybrid`.  For each latent dimension, GCTA
+    fastGWA-mlm LMM residuals are used when available (Vg converged); plain
+    OLS residuals are used as a fallback for dimensions where GCTA did not
+    produce a ``.fastGWA.residual`` file.
+
     Parameters
     ----------
     residuals : np.ndarray  (N, D)
-        Covariate-residualised latent features.  N = subjects, D = latent dim.
+        Hybrid LMM/OLS residualised latent features.  N = subjects, D = latent dim.
     ridge : float
         Small ridge term added to the diagonal of R before returning.
         Ensures the matrix is invertible for the R⁻¹z solve in step 2.
