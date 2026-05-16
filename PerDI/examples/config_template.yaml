@@ -1,0 +1,77 @@
+# Example PerDI configuration template.
+# Copy this file, fill in all placeholder paths, and use it with the
+# example scripts in this directory.
+
+# -----------------------------------------------------------------
+# Paths to model weights
+# -----------------------------------------------------------------
+model:
+  checkpoint: "/path/to/model_epoch_10.pth"        # fold-1 model
+  fold2_checkpoint: "/path/to/fold2_model_epoch_10.pth"  # fold-2 model (for stability)
+  latent_dim: 256
+
+# -----------------------------------------------------------------
+# Imaging data
+# -----------------------------------------------------------------
+imaging:
+  # Root directory containing one NIfTI file per subject.
+  # File pattern: registered_cropped_{IID}_*.nii or *.nii.gz
+  root_dir: "/path/to/registered_volumes/"
+  file_glob: "*.nii.gz"
+
+# -----------------------------------------------------------------
+# GWAS inputs (one phenotype file per latent dimension)
+# -----------------------------------------------------------------
+gwas:
+  # Directory containing summary-statistic files named Feature_0.fastGWA …
+  # Feature_255.fastGWA.  Each file has columns:
+  #   CHR  SNP  POS  A1  A2  N  AF1  BETA  SE  P  INFO
+  sumstat_dir: "/path/to/gwas/duin_sumstats/"
+
+  # Directory containing individual phenotype files named Feature_0 …
+  # Feature_255 with columns: FID  IID  Feature_N
+  pheno_dir: "/path/to/gwas/duin_individual_phenos/"
+
+  # File listing the novel/lead SNPs of interest (one rsid per line or
+  # space-separated with optional columns for chr/pos/pval).
+  novel_snps_file: "/path/to/novel_snps.txt"
+
+# -----------------------------------------------------------------
+# Covariate files (for OLS residualisation in step 1)
+# -----------------------------------------------------------------
+covariates:
+  # Continuous covariates: FID  IID  covar1  covar2 …
+  # Example: age, PCs 1-10, BMI, age², sex-age interactions.
+  qcovar: "/path/to/qcovar"
+
+  # Categorical covariates: FID  IID  sex  site …
+  # Will be one-hot encoded automatically.
+  ccovar: "/path/to/ccovar"
+
+# -----------------------------------------------------------------
+# Genotype data (for sampling subject dosages)
+# -----------------------------------------------------------------
+genotypes:
+  # BGEN file for dosage extraction.
+  bgen_file: "/path/to/genotypes.bgen"
+  sample_file: "/path/to/genotypes.sample"
+  qctool_path: "/path/to/qctool"
+
+# -----------------------------------------------------------------
+# Output
+# -----------------------------------------------------------------
+output:
+  dir: "./output"
+  # Sub-directories will be created automatically:
+  #   output/{tag}_perturbation/   — per-SNP PerDI NIfTI maps
+  #   output/stability/            — stability experiment results
+
+# -----------------------------------------------------------------
+# Run settings
+# -----------------------------------------------------------------
+run:
+  n_sample_per_snp: 500          # subjects sampled per variant
+  convergence_checkpoint: 450    # intermediate convergence check
+  n_stability_subjects: 500      # subjects for stability experiments
+  ridge: 0.0001                  # ridge regularisation for R⁻¹z solve
+  seed: 42
